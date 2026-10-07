@@ -5,10 +5,10 @@ let tasks = [], core, editing = null;
 const rows = new Map();
 try {
  const stored = JSON.parse(localStorage.getItem(storageKey));
- if (Array.isArray(stored) && stored.every(x => typeof x.id === 'string' && typeof x.title === 'string' && typeof x.completed === 'boolean')) tasks = stored;
- else {
+ if (Array.isArray(stored) && stored.every(x => x && typeof x.id === 'string' && typeof x.title === 'string' && typeof x.completed === 'boolean')) tasks = stored;
+ else if (localStorage.getItem(storageKey) === null) {
   const legacy = JSON.parse(localStorage.getItem('mithril-todo-pages-v1'));
-  if (Array.isArray(legacy) && legacy.every(x => typeof x.id === 'string' && typeof x.title === 'string' && ['pending','in_progress','completed'].includes(x.status))) tasks = legacy.map(x => ({id:x.id,title:x.title,completed:x.status === 'completed'}));
+  if (Array.isArray(legacy) && legacy.every(x => x && typeof x.id === 'string' && typeof x.title === 'string' && ['pending','in_progress','completed'].includes(x.status))) tasks = legacy.map(x => ({id:x.id,title:x.title,completed:x.status === 'completed'}));
  }
 } catch { /* Invalid or inaccessible storage does not prevent local use. */ }
 function route() { return ['#/active','#/completed'].includes(location.hash) ? location.hash : '#/'; }
@@ -54,7 +54,7 @@ function render() {
    save();
   };
   edit.onblur = () => finish(false);
-  edit.onkeydown = event => { if (event.key === 'Enter' || event.key === 'Escape') { event.preventDefault(); finish(event.key === 'Escape'); } };
+  edit.onkeydown = event => { if (!event.isComposing && (event.key === 'Enter' || event.key === 'Escape')) { event.preventDefault(); finish(event.key === 'Escape'); } };
   rows.set(task.id, li);
   }
   li.classList.toggle('completed', task.completed); li.classList.toggle('editing', editing === task.id);
@@ -74,8 +74,13 @@ q('.new-todo').onkeydown = event => {
 q('#toggle-all').onchange = event => { tasks.forEach(x => { x.completed = event.target.checked; }); save(); };
 q('.clear-completed').onclick = () => { tasks = tasks.filter(x => !x.completed); save(); };
 window.addEventListener('hashchange', () => { editing = null; render(); });
+async function asset(path, format) {
+ const response = await fetch(path);
+ if (!response.ok) throw Error(`Unable to load ${path}: ${response.status}`);
+ return response[format]();
+}
 async function boot() {
- const [logic, metrics, bytes] = await Promise.all([fetch('./logic.json').then(r => r.json()), fetch('./metrics.json').then(r => r.json()), fetch('./policy.wasm').then(r => r.arrayBuffer())]);
+ const [logic, metrics, bytes] = await Promise.all([asset('./logic.json', 'json'), asset('./metrics.json', 'json'), asset('./policy.wasm', 'arrayBuffer')]);
  const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), x => x.toString(16).padStart(2,'0')).join('');
  if (digest !== metrics.policy.wasm_sha256) throw Error('Mithril artifact digest mismatch');
  new WebAssembly.Module(bytes); core = createCore(logic); render();

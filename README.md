@@ -9,3 +9,13 @@ Persistence uses todos-mithril with id/title/completed. Previously saved Mithril
 Standalone TodoMVC app extracted from the published Mithril Code example. This repository contains only the Todo app, its retained source and third-party license notices. It has independent Git history and does not include the Fund, Desktop or harness repositories.
 
 Run locally with `python3 -m http.server 8000`, then open http://localhost:8000/. The app stores tasks in this browser’s localStorage.
+
+## Verification
+
+```sh
+npm ci
+npx playwright install chromium firefox webkit
+npm run test:all
+```
+
+The functional suite covers all nine TodoMVC behavior groups, plus startup integrity, persistence failures and IME regressions. See [coverage and generation boundaries](docs/coverage.md) and the [public repository map](docs/publication.md). The required runtime measurements remain in metrics.json; other product QA records are excluded from this standalone repository.
