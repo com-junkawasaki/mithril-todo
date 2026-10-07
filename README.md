@@ -19,3 +19,5 @@ npm run test:all
 ```
 
 The functional suite covers all nine TodoMVC behavior groups, plus startup integrity, persistence failures and IME regressions. See [coverage and generation boundaries](docs/coverage.md) and the [public repository map](docs/publication.md). The required runtime measurements remain in metrics.json; other product QA records are excluded from this standalone repository.
+
+System One coding core, Hermes adapter and the pinned Todo/report examples are now collected in [mithril-lang/mithril-system-one](https://github.com/mithril-lang/mithril-system-one). This repository remains the independent Todo application.
